@@ -1,2 +1,2 @@
 # GO-ELKhttps-logs-sender-template
- Go template to send zap logs throw http
+ Go template for sending zap logs over http
