@@ -14,13 +14,15 @@ import (
 	"strings"
 )
 
+const elastic_index_name = "my_index"
+
 func main() {
 	cfg := elasticsearch.Config{
 		Addresses: []string{
-			"https://192.168.1.34:9200",
+			"https://192.168.1.33:9200",
 		},
-		APIKey:                 "ZkRZRDdvOEJCekRicVRYdUpKVHY6ZHdmYVNKdHVUVW1WdWs3Z3FJeGN0UQ==",
-		CertificateFingerprint: "4A3618A97FF43A3D92A9E7691D56B49B6746EC29B4889CA6CBFEEB36FAA57D54",
+		APIKey:                 "NEs1VTg0OEI0ckhMX25NUkVPNkI6T2w3b0NRUUNRZmlYLTV3S0hXWEpLZw==",
+		CertificateFingerprint: "205773CA2CD6F5F3AEC7BBB68D52C7E09AC6DC1667438132BC4CC10BA0D84A20",
 		//Username:               "elastic",
 		//Password:               "wXk51bclsiDOPsjG8h_x",
 	}
@@ -47,7 +49,7 @@ func main() {
 		scanner := bufio.NewScanner(reader)
 		for scanner.Scan() {
 			res, err = es.Index(
-				"my_index",                        // Index name
+				elastic_index_name,                // Index name
 				strings.NewReader(scanner.Text()), // Document body
 				//es.Index.WithDocumentID("7"), // Document ID
 				es.Index.WithRefresh("true"), // Refresh
