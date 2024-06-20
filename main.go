@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/Nerzal/gocloak/v13"
 	"github.com/elastic/elastic-transport-go/v8/elastictransport"
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/gofiber/fiber/v2"
@@ -16,13 +17,13 @@ import (
 
 const elastic_index_name = "my_index"
 
-func main() {
+func elastic_init() *elasticsearch.Client {
 	cfg := elasticsearch.Config{
 		Addresses: []string{
-			"https://192.168.1.33:9200",
+			"https://192.168.137.128:9200",
 		},
-		APIKey:                 "NEs1VTg0OEI0ckhMX25NUkVPNkI6T2w3b0NRUUNRZmlYLTV3S0hXWEpLZw==",
-		CertificateFingerprint: "205773CA2CD6F5F3AEC7BBB68D52C7E09AC6DC1667438132BC4CC10BA0D84A20",
+		APIKey:                 "TUNzX0FwQUIxN1RTUjRKeDRmN3U6ZS1WZkVXYVRTUGVFNjhPamt3ZWRYdw==",
+		CertificateFingerprint: "3B214124C99672377B142724261CD0ECE2AC9CA253439029AC795463B09FE24D",
 		//Username:               "elastic",
 		//Password:               "wXk51bclsiDOPsjG8h_x",
 	}
@@ -31,6 +32,20 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	return es
+}
+
+type keycloak struct {
+	gocloak      gocloak.GoCloak // keycloak client
+	clientId     string          // clientId specified in Keycloak
+	clientSecret string          // client secret specified in Keycloak
+	realm        string          // realm specified in Keycloak
+}
+
+func main() {
+
+	es := elastic_init()
 	res, err := es.Info()
 	if err != nil {
 		log.Fatalf("Error getting response: %s", err)
@@ -63,71 +78,21 @@ func main() {
 		}
 	}(r)
 
-	////Offliene logger
-	app := fiber.New()
-
 	encoderConfig := ecszap.NewDefaultEncoderConfig()
 	core := ecszap.NewCore(encoderConfig, os.Stdout, zap.DebugLevel)
 	zapLogger := zap.New(core, zap.AddCaller())
 
-	/*
-		cfgZ := zap.Config{
-			Encoding:         "json",
-			Level:            zap.NewAtomicLevelAt(zap.InfoLevel),
-			OutputPaths:      []string{"stdout"},
-			ErrorOutputPaths: []string{"stderr"},
-			EncoderConfig: zapcore.EncoderConfig{
-				MessageKey:  "meassage",
-				LevelKey:    "level",
-				TimeKey:     "@timestamp",
-				EncodeTime:  zapcore.ISO8601TimeEncoder,
-				EncodeLevel: zapcore.CapitalColorLevelEncoder,
-			},
-		}
-
-		enc := &prependEncoder{
-			Encoder: zapcore.NewConsoleEncoder(cfgZ.EncoderConfig),
-			pool:    buffer.NewPool(),
-		}
-
-		zapLogger := zap.New(
-			zapcore.NewCore(
-				enc,
-				os.Stdout,
-				zapcore.DebugLevel,
-			),
-			// this mimics the behavior of NewProductionConfig.Build
-			zap.ErrorOutput(os.Stderr),
-		)
-	*/
 	zapLogger.Info("this is info")
 	zapLogger.Debug("this is debug")
 	zapLogger.Warn("this is warn")
-
-	/*cfgZ := zap.Config{
-		Encoding:         "json",
-		Level:            zap.NewAtomicLevelAt(zap.InfoLevel),
-		OutputPaths:      []string{"stdout"},
-		ErrorOutputPaths: []string{"stderr"},
-		EncoderConfig: zapcore.EncoderConfig{
-			MessageKey:  "meassage",
-			LevelKey:    "level",
-			TimeKey:     "@timestamp",
-			EncodeTime:  zapcore.ISO8601TimeEncoder,
-			EncodeLevel: zapcore.CapitalColorLevelEncoder,
-		},
-	}
-
-	zapLogger, err := cfgZ.Build()
-	if err != nil {
-		log.Panic(err)
-	}*/
 
 	zapLogger.Info("Server started",
 		zap.String("logger", "ZAP"),
 		zap.String("host", "localhost"),
 		zap.String("port", "3000"),
 	)
+
+	app := fiber.New()
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		zapLogger.Info("Get resived")
@@ -145,54 +110,3 @@ func main() {
 
 	log.Fatal(app.Listen(":3000"))
 }
-
-/*
-
-
-type prependEncoder struct {
-	// embed a zapcore encoder
-	// this makes prependEncoder implement the interface without extra work
-	zapcore.Encoder
-
-	// zap buffer pool
-	pool buffer.Pool
-}
-
-// implementing only EncodeEntry
-func (e *prependEncoder) EncodeEntry(entry zapcore.Entry, fields []zapcore.Field) (*buffer.Buffer, error) {
-	// new log buffer
-	buf := e.pool.Get()
-
-	// prepend the JournalD prefix based on the entry level
-	buf.AppendString(e.toJournaldPrefix(entry.Level))
-	buf.AppendString(" ")
-
-	// calling the embedded encoder's EncodeEntry to keep the original encoding format
-	consolebuf, err := e.Encoder.EncodeEntry(entry, fields)
-	if err != nil {
-		return nil, err
-	}
-
-	// just write the output into your own buffer
-	_, err = buf.Write(consolebuf.Bytes())
-	if err != nil {
-		return nil, err
-	}
-
-	fmt.Println(buf)
-	return buf, nil
-}
-
-// some mapper function
-func (e *prependEncoder) toJournaldPrefix(lvl zapcore.Level) string {
-	switch lvl {
-	case zapcore.DebugLevel:
-		return "<7>"
-	case zapcore.InfoLevel:
-		return "<6>"
-	case zapcore.WarnLevel:
-		return "<4>"
-	}
-	return ""
-}
-*/
